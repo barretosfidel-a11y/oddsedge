@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OddsEdge — Professional Betting Manager</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0d12;--bg2:#12151f;--bg3:#181c28;--bg4:#1e2333;
+  --border:#252b3d;--border2:#2e3650;
+  --text:#dde3f0;--text2:#a0abbe;--text3:#6b7a99;
+  --green:#34d399;--green2:#059669;--greenBg:#062515;
+  --red:#f87171;--red2:#dc2626;--redBg:#200d0d;
+  --blue:#60a5fa;--blueBg:#0d1a2e;
+  --amber:#fbbf24;--amberBg:#1f1606;
+  --purple:#a78bfa;
+  --accent:#34d399;--accent2:#059669;
+  --radius:10px;--radius2:14px;
+  --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+
+/* AUTH */
+#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.auth-box{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:40px 36px;width:100%;max-width:420px}
+.auth-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px}
+.auth-logo-icon{width:42px;height:42px;background:var(--accent2);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:22px}
+.auth-logo-name{font-size:24px;font-weight:600;letter-spacing:-.5px;color:var(--text)}
+.auth-tag{text-align:center;font-size:11px;color:var(--accent);font-weight:500;letter-spacing:.5px;text-transform:uppercase;margin-bottom:30px}
+.auth-tabs{display:flex;background:var(--bg3);border-radius:10px;padding:3px;margin-bottom:26px}
+.auth-tab{flex:1;background:none;border:none;color:var(--text2);font-family:var(--font);font-size:13px;font-weight:500;padding:8px;border-radius:8px;cursor:pointer;transition:.15s}
+.auth-tab.active{background:var(--bg4);color:var(--text)}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.fg label{font-size:11px;color:var(--text2);font-weight:500;letter-spacing:.4px;text-transform:uppercase}
+.fg input{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:11px 14px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:.15s;width:100%}
+.fg input:focus{border-color:var(--accent2)}
+.fg input::placeholder{color:var(--text3)}
+.btn-auth{width:100%;padding:12px;border-radius:var(--radius);border:none;background:var(--accent2);color:#fff;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:.15s;margin-top:4px}
+.btn-auth:hover{background:var(--accent);color:#000}
+.btn-auth:disabled{opacity:.5;cursor:not-allowed}
+.auth-msg{font-size:12px;text-align:center;margin-top:12px;padding:10px;border-radius:8px;display:none}
+.auth-msg.error{background:var(--redBg);color:var(--red);display:block;border:1px solid rgba(220,38,38,.3)}
+.auth-msg.success{background:var(--greenBg);color:var(--green);display:block}
+.auth-forgot{text-align:right;margin-top:-8px;margin-bottom:14px}
+.auth-forgot a{font-size:11px;color:var(--text3);cursor:pointer;text-decoration:none}
+.auth-forgot a:hover{color:var(--blue)}
+
+/* APP */
+#app-screen{display:none;flex-direction:column;min-height:100vh}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;color:var(--text)}
+.logo-icon{width:28px;height:28px;background:var(--accent2);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.logo-pro{font-size:9px;font-weight:600;color:var(--accent);letter-spacing:.5px;text-transform:uppercase;margin-left:1px}
+.nav{display:flex;gap:2px}
+.nav-btn{background:none;border:none;color:var(--text2);font-family:var(--font);font-size:12px;padding:6px 10px;border-radius:7px;cursor:pointer;transition:.15s;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.nav-btn:hover{background:var(--bg3);color:var(--text)}
+.nav-btn.active{background:var(--bg4);color:var(--text);font-weight:500}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.user-chip{display:flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:5px 10px}
+.user-avatar{width:24px;height:24px;border-radius:50%;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
+.user-email{font-size:12px;color:var(--text2)}
+.btn-logout{background:none;border:1px solid var(--border);border-radius:7px;padding:5px 10px;color:var(--text3);font-size:11px;font-family:var(--font);cursor:pointer;transition:.15s}
+.btn-logout:hover{border-color:var(--red2);color:var(--red)}
+.main{flex:1;padding:24px 20px;max-width:1100px;margin:0 auto;width:100%}
+.tab-content{display:none}.tab-content.active{display:block}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:20px}
+.card-sm{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px;margin-bottom:24px}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:16px}
+.metric-label{font-size:10px;color:var(--text3);letter-spacing:.6px;text-transform:uppercase;margin-bottom:8px;font-weight:500}
+.metric-value{font-size:22px;font-weight:600;font-family:var(--mono);letter-spacing:-.5px}
+.metric-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.green{color:var(--green)}.red{color:var(--red)}.blue{color:var(--blue)}.amber{color:var(--amber)}.purple{color:var(--purple)}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:20px}
+.chart-title{font-size:10px;font-weight:500;color:var(--text3);margin-bottom:14px;text-transform:uppercase;letter-spacing:.6px}
+.chart-h{position:relative;height:170px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:560px}
+th{text-align:left;padding:9px 12px;color:var(--text3);font-weight:500;font-size:10px;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.badge{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600}
+.bw{background:var(--greenBg);color:var(--green)}
+.bl{background:var(--redBg);color:var(--red)}
+.bp{background:var(--bg4);color:var(--text2)}
+.bn{background:var(--amberBg);color:var(--amber)}
+.sb{display:inline-flex;align-items:center;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:500;background:var(--bg4);color:var(--text2)}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.section-title{font-size:15px;font-weight:600;color:var(--text)}
+.section-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fgg{display:flex;flex-direction:column;gap:5px}
+.fgg.full{grid-column:1/-1}
+.fgg label{font-size:10px;color:var(--text2);font-weight:500;letter-spacing:.4px;text-transform:uppercase}
+.fgg input,.fgg select,.fgg textarea{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:.15s;width:100%}
+.fgg input::placeholder,.fgg textarea::placeholder{color:var(--text3)}
+.fgg input:focus,.fgg select:focus,.fgg textarea:focus{border-color:var(--accent2)}
+.fgg select option{background:var(--bg2);color:var(--text)}
+.btn{padding:9px 16px;border-radius:var(--radius);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:.15s;border:none}
+.btn-primary{background:var(--accent2);color:#fff}.btn-primary:hover{background:var(--accent);color:#000}
+.btn-secondary{background:var(--bg3);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{background:var(--bg4)}
+.btn-danger{background:var(--redBg);color:var(--red);border:1px solid rgba(220,38,38,.3)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.empty{text-align:center;padding:40px 20px;color:var(--text3)}
+.streak-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin:2px}
+.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:12px;color:var(--text);transform:translateY(20px);opacity:0;transition:.2s;pointer-events:none;max-width:280px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:var(--green2);color:var(--green)}
+.toast.err{border-color:var(--red2);color:var(--red)}
+@media(max-width:640px){
+  .nav .nav-lbl{display:none}
+  .charts-grid{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .user-email{display:none}
+  .main{padding:14px}
+  .topbar{padding:0 12px}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">📈</div>
+      <div class="auth-logo-name">OddsEdge</div>
+    </div>
+    <div class="auth-tag">Professional Betting Manager</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">Entrar</button>
+      <button class="auth-tab" onclick="switchTab('signup')">Criar conta</button>
+    </div>
+
+    <div id="pane-login">
+      <div class="fg"><label>E-mail</label><input type="email" id="li-email" placeholder="seu@email.com"></div>
+      <div class="fg"><label>Senha</label><input type="password" id="li-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="auth-forgot"><a onclick="doReset()">Esqueci minha senha</a></div>
+      <button class="btn-auth" id="btn-li" onclick="doLogin()">Entrar na conta</button>
+    </div>
+
+    <div id="pane-signup" style="display:none">
+      <div class="fg"><label>Nome</label><input type="text" id="su-name" placeholder="Seu nome completo"></div>
+      <div class="fg"><label>E-mail</label><input type="email" id="su-email" placeholder="seu@email.com"></div>
+      <div class="fg"><label>Senha</label><input type="password" id="su-pass" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter')doSignup()"></div>
+      <button class="btn-auth" id="btn-su" onclick="doSignup()">Criar conta grátis</button>
+    </div>
+
+    <div class="auth-msg" id="auth-msg"></div>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="app-screen">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div class="logo">
+        <div class="logo-icon">📈</div>
+        OddsEdge
+        <span class="logo-pro">PRO</span>
+      </div>
+      <div class="nav">
+        <button class="nav-btn active" onclick="goto('dashboard')">📊 <span class="nav-lbl">Dashboard</span></button>
+        <button class="nav-btn" onclick="goto('register')">➕ <span class="nav-lbl">Apostar</span></button>
+        <button class="nav-btn" onclick="goto('history')">📋 <span class="nav-lbl">Histórico</span></button>
+        <button class="nav-btn" onclick="goto('bankroll')">💰 <span class="nav-lbl">Banca</span></button>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-chip">
+        <div class="user-avatar" id="u-avatar">U</div>
+        <span class="user-email" id="u-email"></span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content active">
+      <div class="section-header">
+        <div><div class="section-title">Visão Geral</div><div class="section-sub" id="dash-date"></div></div>
+        <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇ Exportar CSV</button>
+      </div>
+      <div class="metrics" id="metrics-grid"></div>
+      <div class="charts-grid">
+        <div class="chart-wrap"><div class="chart-title">Evolução da Banca</div><div class="chart-h"><canvas id="cBankroll"></canvas></div></div>
+        <div class="chart-wrap"><div class="chart-title">Lucro por Esporte</div><div class="chart-h"><canvas id="cSports"></canvas></div></div>
+        <div class="chart-wrap"><div class="chart-title">Win Rate Mensal</div><div class="chart-h"><canvas id="cWinrate"></canvas></div></div>
+        <div class="chart-wrap"><div class="chart-title">Lucro por Mercado</div><div class="chart-h"><canvas id="cMarkets"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="section-header" style="margin-bottom:12px"><div class="section-title" style="font-size:14px">Últimas Apostas</div></div>
+        <div class="table-wrap" id="recent-bets"></div>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="tab-register" class="tab-content">
+      <div class="section-header"><div><div class="section-title">Nova Aposta</div><div class="section-sub">Registre com todos os detalhes</div></div></div>
+      <div class="card">
+        <div class="form-grid">
+          <div class="fgg"><label>Data</label><input type="date" id="f-date"></div>
+          <div class="fgg"><label>Esporte</label>
+            <select id="f-sport">
+              <option value="">Selecionar...</option>
+              <option>⚽ Futebol</option><option>🏀 Basquete</option><option>🎾 Tênis</option>
+              <option>🏈 Futebol Americano</option><option>🎱 Snooker</option><option>🏐 Vôlei</option>
+              <option>🥊 MMA/Boxe</option><option>🏎 Fórmula 1</option><option>⚾ Beisebol</option>
+              <option>🏒 Hóquei</option><option>🎮 eSports</option><option>Outros</option>
+            </select>
+          </div>
+          <div class="fgg"><label>Liga / Campeonato</label><input type="text" id="f-league" placeholder="Ex: Brasileirão, NBA..."></div>
+          <div class="fgg"><label>Partida</label><input type="text" id="f-match" placeholder="Ex: Flamengo x Palmeiras"></div>
+          <div class="fgg"><label>Mercado</label>
+            <select id="f-market">
+              <option>Resultado Final (1X2)</option><option>Dupla Chance</option><option>Ambas Marcam</option>
+              <option>Over/Under Gols</option><option>Handicap Asiático</option><option>Handicap Europeu</option>
+              <option>Placar Exato</option><option>Vencedor da Partida</option><option>Total de Pontos</option>
+              <option>Spread</option><option>Moneyline</option><option>Outros</option>
+            </select>
+          </div>
+          <div class="fgg"><label>Pick / Seleção</label><input type="text" id="f-pick" placeholder="Ex: Flamengo, Over 2.5..."></div>
+          <div class="fgg"><label>Odd (cotação)</label><input type="number" id="f-odd" step="0.01" min="1.01" placeholder="Ex: 1.95"></div>
+          <div class="fgg"><label>Stake (R$)</label><input type="number" id="f-stake" step="0.01" min="0.01" placeholder="Ex: 50.00"></div>
+          <div class="fgg"><label>Casa de Aposta</label><input type="text" id="f-house" placeholder="Ex: Bet365, Betano..."></div>
+          <div class="fgg"><label>Status</label>
+            <select id="f-status">
+              <option value="pending">⏳ Pendente</option><option value="win">✅ Green</option>
+              <option value="loss">❌ Red</option><option value="push">🔄 Devolvida</option>
+            </select>
+          </div>
+          <div class="fgg full"><label>Observações</label><textarea id="f-notes" rows="2" placeholder="Análise, contexto, tips..."></textarea></div>
+        </div>
+        <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+          <div class="card-sm" style="flex:1;min-width:160px">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Retorno Potencial</div>
+            <div style="font-size:20px;font-weight:600;font-family:var(--mono);color:var(--green)" id="calc-return">R$ 0,00</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:3px">Lucro: <span id="calc-profit" style="color:var(--green)">R$ 0,00</span></div>
+          </div>
+          <div class="card-sm" style="flex:1;min-width:160px">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">% da Banca</div>
+            <div style="font-size:20px;font-weight:600;font-family:var(--mono);color:var(--amber)" id="calc-pct">0,00%</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:3px">Banca: <span id="calc-bk" style="color:var(--text2)">R$ 0,00</span></div>
+          </div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px">
+          <button class="btn btn-primary" onclick="saveBet()" style="flex:1">✓ Registrar Aposta</button>
+          <button class="btn btn-secondary" onclick="clearForm()">Limpar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="tab-history" class="tab-content">
+      <div class="section-header">
+        <div><div class="section-title">Histórico</div><div class="section-sub" id="hist-count"></div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇ CSV</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportJSON()">⬇ JSON</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <input type="text" id="srch" placeholder="🔍 Buscar..." oninput="renderHistory()"
+          style="flex:1;min-width:160px;max-width:260px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-family:var(--font);font-size:12px;outline:none">
+        <select id="fs" onchange="renderHistory()"
+          style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-size:12px;outline:none;min-width:130px">
+          <option value="">Todos esportes</option>
+          <option>⚽ Futebol</option><option>🏀 Basquete</option><option>🎾 Tênis</option>
+          <option>🏈 Futebol Americano</option><option>🎱 Snooker</option><option>🏐 Vôlei</option>
+          <option>🥊 MMA/Boxe</option><option>🏎 Fórmula 1</option><option>⚾ Beisebol</option>
+          <option>🏒 Hóquei</option><option>🎮 eSports</option><option>Outros</option>
+        </select>
+        <select id="fst" onchange="renderHistory()"
+          style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-size:12px;outline:none;min-width:110px">
+          <option value="">Todos status</option>
+          <option value="win">✅ Green</option><option value="loss">❌ Red</option>
+          <option value="push">🔄 Devolvida</option><option value="pending">⏳ Pendente</option>
+        </select>
+      </div>
+      <div class="card"><div class="table-wrap" id="hist-table"></div></div>
+    </div>
+
+    <!-- BANKROLL -->
+    <div id="tab-bankroll" class="tab-content">
+      <div class="section-header"><div class="section-title">Gestão de Banca</div></div>
+      <div class="metrics" id="bk-metrics"></div>
+      <div class="charts-grid">
+        <div class="chart-wrap"><div class="chart-title">Evolução da Banca</div><div style="position:relative;height:150px"><canvas id="cBankroll2"></canvas></div></div>
+        <div class="card-sm" style="display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Configurações</div>
+          <div class="fgg"><label>Banca Inicial (R$)</label><input type="number" id="bk-val" step="0.01" placeholder="Ex: 1000.00"></div>
+          <button class="btn btn-primary btn-sm" onclick="setBankroll()">Definir banca</button>
+          <div style="border-top:1px solid var(--border);padding-top:10px">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Estratégia de Stakes</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div id="s-flat" onclick="setStrat('flat')" style="background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:9px 12px;cursor:pointer">
+                <div style="font-size:12px;font-weight:500;color:var(--text)">Flat Betting</div>
+                <div style="font-size:10px;color:var(--text3);margin-top:2px">Valor fixo por aposta</div>
+              </div>
+              <div id="s-kelly" onclick="setStrat('kelly')" style="background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:9px 12px;cursor:pointer">
+                <div style="font-size:12px;font-weight:500;color:var(--text)">Kelly Criterion</div>
+                <div style="font-size:10px;color:var(--text3);margin-top:2px">Baseado em edge e odd</div>
+              </div>
+              <div id="s-pct" onclick="setStrat('pct')" style="background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:9px 12px;cursor:pointer">
+                <div style="font-size:12px;font-weight:500;color:var(--text)">% da Banca</div>
+                <div style="font-size:10px;color:var(--text3);margin-top:2px">Percentual fixo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px">Sequências e Performance</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px" id="bk-extra"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+// ── CONFIG SUPABASE ────────────────────────────────────────────────────
+// Quando tiver seu Supabase pronto, substitua os valores abaixo:
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const USE_SUPABASE = SUPABASE_URL !== 'YOUR_SUPABASE_URL';
+
+// ── STATE ──────────────────────────────────────────────────────────────
+let currentUser = null;
+let bets = [];
+let settings = { initialBankroll: 1000, strategy: 'flat' };
+let charts = {};
+
+// ── UTILS ──────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmt = v => 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtN = v => Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const pct = v => Number(v).toFixed(1) + '%';
+
+function toast(msg, type = 'ok') {
+  const w = $('toast-wrap');
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg; w.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show', type));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2800);
+}
+
+function saveLocal() {
+  if (!currentUser) return;
+  const k = 'oe_' + currentUser.id;
+  localStorage.setItem(k + '_bets', JSON.stringify(bets));
+  localStorage.setItem(k + '_cfg', JSON.stringify(settings));
+}
+
+function loadLocal() {
+  if (!currentUser) return;
+  const k = 'oe_' + currentUser.id;
+  bets = JSON.parse(localStorage.getItem(k + '_bets') || '[]');
+  settings = JSON.parse(localStorage.getItem(k + '_cfg') || '{"initialBankroll":1000,"strategy":"flat"}');
+}
+
+// ── AUTH ───────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((el, i) => el.classList.toggle('active', i === (tab === 'login' ? 0 : 1)));
+  $('pane-login').style.display = tab === 'login' ? 'block' : 'none';
+  $('pane-signup').style.display = tab === 'signup' ? 'block' : 'none';
+  $('auth-msg').style.display = 'none';
+}
+
+function showMsg(msg, type = 'error') {
+  const el = $('auth-msg');
+  el.textContent = msg; el.className = 'auth-msg ' + type; el.style.display = 'block';
+}
+
+async function doLogin() {
+  const email = $('li-email').value.trim();
+  const pass = $('li-pass').value;
+  if (!email || !pass) { showMsg('Preencha e-mail e senha'); return; }
+  $('btn-li').disabled = true; $('btn-li').textContent = 'Entrando...';
+
+  if (USE_SUPABASE) {
+    try {
+      const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass })
+      });
+      const data = await res.json();
+      if (data.access_token) {
+        currentUser = { id: data.user.id, email: data.user.email, name: data.user.email.split('@')[0], token: data.access_token };
+        localStorage.setItem('oe_session', JSON.stringify(currentUser));
+        enterApp();
+      } else {
+        showMsg(data.error_description || 'E-mail ou senha incorretos');
+      }
+    } catch (e) { showMsg('Erro de conexão. Tente novamente.'); }
+  } else {
+    const users = JSON.parse(localStorage.getItem('oe_users') || '{}');
+    const u = users[email];
+    if (!u) { showMsg('E-mail não encontrado'); }
+    else if (u.pass !== pass) { showMsg('Senha incorreta'); }
+    else {
+      currentUser = u;
+      localStorage.setItem('oe_session', JSON.stringify(currentUser));
+      enterApp();
+    }
+  }
+  $('btn-li').disabled = false; $('btn-li').textContent = 'Entrar na conta';
+}
+
+async function doSignup() {
+  const name = $('su-name').value.trim();
+  const email = $('su-email').value.trim();
+  const pass = $('su-pass').value;
+  if (!name || !email || !pass) { showMsg('Preencha todos os campos'); return; }
+  if (pass.length < 6) { showMsg('Senha mínimo 6 caracteres'); return; }
+  $('btn-su').disabled = true; $('btn-su').textContent = 'Criando...';
+
+  if (USE_SUPABASE) {
+    try {
+      const res = await fetch(SUPABASE_URL + '/auth/v1/signup', {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass })
+      });
+      const data = await res.json();
+      if (data.id || data.user) {
+        showMsg('Conta criada! Verifique seu e-mail para confirmar.', 'success');
+      } else {
+        showMsg(data.msg || data.error_description || 'Erro ao criar conta');
+      }
+    } catch (e) { showMsg('Erro de conexão. Tente novamente.'); }
+  } else {
+    const users = JSON.parse(localStorage.getItem('oe_users') || '{}');
+    if (users[email]) { showMsg('E-mail já cadastrado'); }
+    else {
+      const id = 'u_' + Date.now();
+      users[email] = { id, name, email, pass };
+      localStorage.setItem('oe_users', JSON.stringify(users));
+      currentUser = { id, name, email };
+      localStorage.setItem('oe_session', JSON.stringify(currentUser));
+      enterApp();
+    }
+  }
+  $('btn-su').disabled = false; $('btn-su').textContent = 'Criar conta grátis';
+}
+
+async function doReset() {
+  const email = $('li-email').value.trim();
+  if (!email) { showMsg('Digite seu e-mail primeiro'); return; }
+  if (USE_SUPABASE) {
+    await fetch(SUPABASE_URL + '/auth/v1/recover', {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    showMsg('E-mail de recuperação enviado!', 'success');
+  } else {
+    showMsg('Recuperação de senha disponível após conectar o Supabase');
+  }
+}
+
+function doLogout() {
+  currentUser = null;
+  localStorage.removeItem('oe_session');
+  $('app-screen').style.display = 'none';
+  $('auth-screen').style.display = 'flex';
+  Object.values(charts).forEach(c => c.destroy());
+  charts = {}; bets = [];
+}
+
+function enterApp() {
+  loadLocal();
+  seedIfEmpty();
+  $('auth-screen').style.display = 'none';
+  $('app-screen').style.display = 'flex';
+  const initials = (currentUser.name || currentUser.email || 'U').slice(0, 2).toUpperCase();
+  $('u-avatar').textContent = initials;
+  $('u-email').textContent = currentUser.email || currentUser.name || '';
+  $('f-date').value = new Date().toISOString().split('T')[0];
+  renderDashboard();
+  calcPreview();
+  $('f-odd').addEventListener('input', calcPreview);
+  $('f-stake').addEventListener('input', calcPreview);
+}
+
+// ── NAV ────────────────────────────────────────────────────────────────
+function goto(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  $('tab-' + tab).classList.add('active');
+  document.querySelectorAll('.nav-btn')[['dashboard', 'register', 'history', 'bankroll'].indexOf(tab)].classList.add('active');
+  if (tab === 'dashboard') renderDashboard();
+  if (tab === 'history') renderHistory();
+  if (tab === 'bankroll') renderBankroll();
+}
+
+// ── STATS ──────────────────────────────────────────────────────────────
+function getStats(list) {
+  const s = list.filter(b => b.status !== 'pending');
+  const w = s.filter(b => b.status === 'win');
+  const l = s.filter(b => b.status === 'loss');
+  const stake = s.reduce((a, b) => a + b.stake, 0);
+  const ret = w.reduce((a, b) => a + b.stake * b.odd, 0) + s.filter(b => b.status === 'push').reduce((a, b) => a + b.stake, 0);
+  const profit = ret - stake;
+  const roi = stake > 0 ? (profit / stake) * 100 : 0;
+  const wr = s.length > 0 ? (w.length / s.length) * 100 : 0;
+  const avgOdd = s.length > 0 ? s.reduce((a, b) => a + b.odd, 0) / s.length : 0;
+  return { w, l, s, stake, profit, roi, wr, avgOdd };
+}
+
+function curBK() { return settings.initialBankroll + getStats(bets).profit; }
+
+function bkHistory() {
+  let bk = settings.initialBankroll;
+  const pts = [{ l: 'Início', v: bk }];
+  [...bets].filter(b => b.status !== 'pending').sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(b => {
+    if (b.status === 'win') bk += b.stake * (b.odd - 1);
+    else if (b.status === 'loss') bk -= b.stake;
+    pts.push({ l: b.date.slice(5), v: parseFloat(bk.toFixed(2)) });
+  });
+  return pts;
+}
+
+// ── CHARTS ─────────────────────────────────────────────────────────────
+const CD = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#181c28', borderColor: '#252b3d', borderWidth: 1, titleColor: '#a0abbe', bodyColor: '#dde3f0', padding: 8 } }, scales: { x: { ticks: { color: '#6b7a99', font: { size: 9 } }, grid: { color: '#181c28' } }, y: { ticks: { color: '#6b7a99', font: { size: 9 } }, grid: { color: '#181c28' } } } };
+
+function mkChart(id, cfg) { if (charts[id]) charts[id].destroy(); charts[id] = new Chart($(id).getContext('2d'), cfg); }
+
+function buildBkChart(id, history) {
+  const vals = history.map(p => p.v), labels = history.map(p => p.l);
+  const gain = vals[vals.length - 1] >= vals[0];
+  const c = gain ? '#34d399' : '#f87171';
+  const ctx = $(id).getContext('2d');
+  const g = ctx.createLinearGradient(0, 0, 0, 150);
+  g.addColorStop(0, gain ? 'rgba(52,211,153,.2)' : 'rgba(248,113,113,.2)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  mkChart(id, { type: 'line', data: { labels, datasets: [{ data: vals, borderColor: c, backgroundColor: g, borderWidth: 2, pointRadius: vals.length > 30 ? 0 : 3, pointBackgroundColor: c, tension: .35, fill: true }] }, options: { ...CD } });
+}
+
+function buildSports() {
+  const sp = {};
+  bets.filter(b => b.status !== 'pending').forEach(b => {
+    const k = b.sport || 'Outros'; if (!sp[k]) sp[k] = 0;
+    if (b.status === 'win') sp[k] += b.stake * (b.odd - 1); else if (b.status === 'loss') sp[k] -= b.stake;
+  });
+  const labs = Object.keys(sp), data = labs.map(k => parseFloat(sp[k].toFixed(2)));
+  if (!labs.length) return;
+  mkChart('cSports', { type: 'bar', data: { labels: labs, datasets: [{ data, backgroundColor: data.map(v => v >= 0 ? '#34d399' : '#f87171'), borderRadius: 5 }] }, options: { ...CD } });
+}
+
+function buildWinrate() {
+  const m = {};
+  bets.filter(b => b.status !== 'pending').forEach(b => {
+    const k = b.date.slice(0, 7); if (!m[k]) m[k] = { w: 0, t: 0 };
+    if (b.status === 'win') m[k].w++; m[k].t++;
+  });
+  const labs = Object.keys(m).sort().slice(-6);
+  const data = labs.map(k => m[k].t > 0 ? parseFloat(((m[k].w / m[k].t) * 100).toFixed(1)) : 0);
+  mkChart('cWinrate', { type: 'bar', data: { labels: labs, datasets: [{ data, backgroundColor: '#60a5fa', borderRadius: 5 }] }, options: { ...CD, scales: { ...CD.scales, y: { ...CD.scales.y, max: 100 } } } });
+}
+
+function buildMarkets() {
+  const mk = {};
+  bets.filter(b => b.status !== 'pending').forEach(b => {
+    const k = b.market || 'Outros'; if (!mk[k]) mk[k] = 0;
+    if (b.status === 'win') mk[k] += b.stake * (b.odd - 1); else if (b.status === 'loss') mk[k] -= b.stake;
+  });
+  const entries = Object.entries(mk).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const labs = entries.map(e => e[0].length > 16 ? e[0].slice(0, 14) + '…' : e[0]);
+  const data = entries.map(e => parseFloat(e[1].toFixed(2)));
+  if (!labs.length) return;
+  mkChart('cMarkets', { type: 'bar', indexAxis: 'y', data: { labels: labs, datasets: [{ data, backgroundColor: data.map(v => v >= 0 ? 'rgba(52,211,153,.7)' : 'rgba(248,113,113,.7)'), borderRadius: 4 }] }, options: { ...CD } });
+}
+
+// ── DASHBOARD ──────────────────────────────────────────────────────────
+function renderDashboard() {
+  $('dash-date').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+  const { w, l, s, stake, profit, roi, wr, avgOdd } = getStats(bets);
+  const bk = curBK();
+  const pend = bets.filter(b => b.status === 'pending');
+  $('metrics-grid').innerHTML = `
+    <div class="metric"><div class="metric-label">Banca Atual</div><div class="metric-value blue">${fmt(bk)}</div><div class="metric-sub">Inicial: ${fmt(settings.initialBankroll)}</div></div>
+    <div class="metric"><div class="metric-label">Lucro / Prejuízo</div><div class="metric-value ${profit >= 0 ? 'green' : 'red'}">${profit >= 0 ? '+' : ''}${fmt(profit)}</div><div class="metric-sub">Volume: ${fmt(stake)}</div></div>
+    <div class="metric"><div class="metric-label">ROI</div><div class="metric-value ${roi >= 0 ? 'green' : 'red'}">${roi >= 0 ? '+' : ''}${pct(roi)}</div><div class="metric-sub">${s.length} encerradas</div></div>
+    <div class="metric"><div class="metric-label">Win Rate</div><div class="metric-value amber">${pct(wr)}</div><div class="metric-sub">${w.length}G / ${l.length}P</div></div>
+    <div class="metric"><div class="metric-label">Odd Média</div><div class="metric-value purple">${fmtN(avgOdd)}</div><div class="metric-sub">${pend.length} pendentes</div></div>
+    <div class="metric"><div class="metric-label">Total Apostas</div><div class="metric-value">${bets.length}</div><div class="metric-sub">Todas as apostas</div></div>`;
+  buildBkChart('cBankroll', bkHistory()); buildSports(); buildWinrate(); buildMarkets();
+  const recent = [...bets].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 8);
+  $('recent-bets').innerHTML = recent.length ? mkTable(recent, true) : '<div class="empty"><div style="font-size:32px;margin-bottom:8px">🎯</div><div>Nenhuma aposta ainda</div></div>';
+}
+
+// ── TABLE ──────────────────────────────────────────────────────────────
+function mkTable(list, compact) {
+  const sm = { win: '<span class="badge bw">Green ✅</span>', loss: '<span class="badge bl">Red ❌</span>', push: '<span class="badge bp">Dev 🔄</span>', pending: '<span class="badge bn">Pendente</span>' };
+  const rows = list.map(b => {
+    const lv = b.status === 'win' ? b.stake * (b.odd - 1) : b.status === 'loss' ? -b.stake : b.status === 'push' ? 0 : null;
+    const ls = lv === null ? '—' : `<span class="${lv >= 0 ? 'green' : 'red'}">${lv >= 0 ? '+' : ''}${fmt(lv)}</span>`;
+    const ex = compact ? '' : `<td style="color:var(--text2)">${b.house || '—'}</td><td style="color:var(--text2);max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.notes || '—'}</td><td><button class="btn btn-danger btn-sm" onclick="delBet('${b.id}')">✕</button></td>`;
+    return `<tr><td style="color:var(--text3);white-space:nowrap">${b.date}</td><td><span class="sb">${b.sport || '—'}</span></td><td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.match || '—'}</td><td style="color:var(--text2)">${b.pick || '—'}</td><td style="font-family:var(--mono)">${fmtN(b.odd)}</td><td style="font-family:var(--mono)">${fmt(b.stake)}</td><td>${ls}</td><td>${sm[b.status] || ''}</td>${ex}</tr>`;
+  }).join('');
+  const exH = compact ? '' : '<th>Casa</th><th>Notas</th><th></th>';
+  return `<table><thead><tr><th>Data</th><th>Esporte</th><th>Partida</th><th>Pick</th><th>Odd</th><th>Stake</th><th>Lucro</th><th>Status</th>${exH}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ── HISTORY ────────────────────────────────────────────────────────────
+function renderHistory() {
+  const q = ($('srch')?.value || '').toLowerCase();
+  const sp = $('fs')?.value || '';
+  const st = $('fst')?.value || '';
+  let list = [...bets].sort((a, b) => new Date(b.date) - new Date(a.date));
+  if (q) list = list.filter(b => (b.match + b.sport + b.pick + b.league + b.house).toLowerCase().includes(q));
+  if (sp) list = list.filter(b => b.sport === sp);
+  if (st) list = list.filter(b => b.status === st);
+  $('hist-count').textContent = `${list.length} apostas encontradas`;
+  $('hist-table').innerHTML = list.length ? mkTable(list, false) : '<div class="empty"><div style="font-size:32px;margin-bottom:8px">🔍</div><div>Nenhuma aposta encontrada</div></div>';
+}
+
+function delBet(id) {
+  if (!confirm('Remover esta aposta?')) return;
+  bets = bets.filter(b => b.id !== id);
+  saveLocal(); renderHistory(); toast('Aposta removida', 'err');
+}
+
+// ── REGISTER ───────────────────────────────────────────────────────────
+function calcPreview() {
+  const odd = parseFloat($('f-odd').value) || 0;
+  const stake = parseFloat($('f-stake').value) || 0;
+  $('calc-return').textContent = fmt(stake * odd);
+  $('calc-profit').textContent = fmt(stake * (odd - 1));
+  const bk = curBK();
+  $('calc-bk').textContent = fmt(bk);
+  $('calc-pct').textContent = bk > 0 ? pct((stake / bk) * 100) : '0%';
+}
+
+function saveBet() {
+  const d = $('f-date').value, sp = $('f-sport').value, lg = $('f-league').value,
+    mt = $('f-match').value, mk = $('f-market').value, pk = $('f-pick').value,
+    odd = parseFloat($('f-odd').value), stake = parseFloat($('f-stake').value),
+    hs = $('f-house').value, st = $('f-status').value, nt = $('f-notes').value;
+  if (!d || !sp || !mt || !odd || !stake) { toast('Preencha os campos obrigatórios', 'err'); return; }
+  if (odd < 1.01) { toast('Odd mínima: 1.01', 'err'); return; }
+  if (stake <= 0) { toast('Stake deve ser positivo', 'err'); return; }
+  bets.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2), date: d, sport: sp, league: lg, match: mt, market: mk, pick: pk, odd, stake, house: hs, status: st, notes: nt, createdAt: new Date().toISOString() });
+  saveLocal(); clearForm(); toast('✅ Aposta registrada com sucesso!');
+}
+
+function clearForm() {
+  ['f-league', 'f-match', 'f-pick', 'f-odd', 'f-stake', 'f-house', 'f-notes'].forEach(id => { const el = $(id); if (el) el.value = ''; });
+  $('f-sport').value = ''; $('f-status').value = 'pending';
+  $('f-date').value = new Date().toISOString().split('T')[0];
+  calcPreview();
+}
+
+// ── BANKROLL ───────────────────────────────────────────────────────────
+function renderBankroll() {
+  const { w, l, s, stake, profit, roi } = getStats(bets);
+  const bk = curBK();
+  const grow = settings.initialBankroll > 0 ? ((bk - settings.initialBankroll) / settings.initialBankroll) * 100 : 0;
+  $('bk-metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">Banca Atual</div><div class="metric-value blue">${fmt(bk)}</div><div class="metric-sub">${grow >= 0 ? '+' : ''}${pct(grow)} desde início</div></div>
+    <div class="metric"><div class="metric-label">Banca Inicial</div><div class="metric-value">${fmt(settings.initialBankroll)}</div><div class="metric-sub">Estratégia: ${settings.strategy}</div></div>
+    <div class="metric"><div class="metric-label">ROI Total</div><div class="metric-value ${roi >= 0 ? 'green' : 'red'}">${roi >= 0 ? '+' : ''}${pct(roi)}</div><div class="metric-sub">Sobre volume</div></div>
+    <div class="metric"><div class="metric-label">Stake Médio</div><div class="metric-value amber">${s.length > 0 ? fmt(stake / s.length) : fmt(0)}</div><div class="metric-sub">Por aposta</div></div>`;
+  $('bk-val').value = settings.initialBankroll;
+  buildBkChart('cBankroll2', bkHistory());
+  const sorted = [...bets].filter(b => b.status !== 'pending').sort((a, b) => new Date(a.date) - new Date(b.date));
+  let maxW = 0, maxL = 0, tmpW = 0, tmpL = 0, last = '', cur = 0;
+  sorted.forEach(b => {
+    if (b.status === 'win') { tmpW++; tmpL = 0; if (tmpW > maxW) maxW = tmpW; }
+    else if (b.status === 'loss') { tmpL++; tmpW = 0; if (tmpL > maxL) maxL = tmpL; }
+    last = b.status;
+  });
+  if (sorted.length) { let i = sorted.length - 1; const ref = sorted[i].status; while (i >= 0 && sorted[i].status === ref) { cur++; i--; } }
+  const dots = sorted.slice(-20).map(b => `<span class="streak-dot" style="background:${b.status === 'win' ? 'var(--green)' : b.status === 'loss' ? 'var(--red)' : 'var(--text3)'}"></span>`).join('');
+  $('bk-extra').innerHTML = `
+    <div class="card-sm"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Sequência atual</div><div style="font-size:20px;font-weight:600;font-family:var(--mono);color:${last === 'win' ? 'var(--green)' : last === 'loss' ? 'var(--red)' : 'var(--text2)'}">${cur}${last === 'win' ? '✅' : last === 'loss' ? '❌' : ''}</div><div style="margin-top:6px">${dots}</div></div>
+    <div class="card-sm"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Maior seq. greens</div><div style="font-size:20px;font-weight:600;font-family:var(--mono);color:var(--green)">${maxW}</div></div>
+    <div class="card-sm"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Maior seq. reds</div><div style="font-size:20px;font-weight:600;font-family:var(--mono);color:var(--red)">${maxL}</div></div>
+    <div class="card-sm"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Yield total</div><div style="font-size:20px;font-weight:600;font-family:var(--mono);color:${roi >= 0 ? 'var(--green)' : 'var(--red)'}">${roi >= 0 ? '+' : ''}${pct(roi)}</div></div>`;
+  ['flat', 'kelly', 'pct'].forEach(k => { const el = $('s-' + k); if (el) el.style.borderColor = settings.strategy === k ? 'var(--green2)' : 'var(--border)'; });
+}
+
+function setBankroll() {
+  const v = parseFloat($('bk-val').value);
+  if (!v || v <= 0) { toast('Valor inválido', 'err'); return; }
+  settings.initialBankroll = v; saveLocal(); renderBankroll(); toast('Banca definida!');
+}
+function setStrat(s) { settings.strategy = s; saveLocal(); renderBankroll(); toast('Estratégia: ' + s); }
+
+// ── EXPORT ─────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!bets.length) { toast('Sem dados para exportar', 'err'); return; }
+  const h = ['Data', 'Esporte', 'Liga', 'Partida', 'Mercado', 'Pick', 'Odd', 'Stake', 'Status', 'Casa', 'Lucro', 'Notas'];
+  const rows = bets.map(b => {
+    const lv = b.status === 'win' ? b.stake * (b.odd - 1) : b.status === 'loss' ? -b.stake : b.status === 'push' ? 0 : '';
+    return [b.date, b.sport, b.league, b.match, b.market, b.pick, b.odd, b.stake, b.status, b.house, lv, b.notes].map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(',');
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([h.join(',') + '\n' + rows.join('\n')], { type: 'text/csv' }));
+  a.download = 'oddsedge_' + new Date().toISOString().slice(0, 10) + '.csv'; a.click();
+  toast('CSV exportado!');
+}
+function exportJSON() {
+  if (!bets.length) { toast('Sem dados', 'err'); return; }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), settings, bets }, null, 2)], { type: 'application/json' }));
+  a.download = 'oddsedge_' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
+  toast('JSON exportado!');
+}
+
+// ── SEED ───────────────────────────────────────────────────────────────
+function seedIfEmpty() {
+  if (bets.length > 0) return;
+  const data = [
+    { sport: '⚽ Futebol', match: 'Flamengo x Palmeiras', pick: 'Flamengo', odd: 2.10, stake: 100, status: 'win', date: '2025-03-01', house: 'Bet365' },
+    { sport: '🏀 Basquete', match: 'Lakers x Warriors', pick: 'Lakers', odd: 1.85, stake: 80, status: 'loss', date: '2025-03-03', house: 'Betano' },
+    { sport: '🎾 Tênis', match: 'Djokovic x Alcaraz', pick: 'Djokovic', odd: 1.72, stake: 120, status: 'win', date: '2025-03-05', house: 'Sportingbet' },
+    { sport: '⚽ Futebol', match: 'Corinthians x São Paulo', pick: 'Empate', odd: 3.20, stake: 50, status: 'win', date: '2025-03-08', house: 'Bet365' },
+    { sport: '⚽ Futebol', match: 'Real x City', pick: 'Real Madrid', odd: 2.45, stake: 150, status: 'loss', date: '2025-03-10', house: '1xBet' },
+    { sport: '🏀 Basquete', match: 'NBA Finals G5', pick: 'Under 214.5', odd: 1.90, stake: 90, status: 'win', date: '2025-03-14', house: 'Betano' },
+    { sport: '🎾 Tênis', match: 'Sinner x Fritz', pick: 'Sinner', odd: 1.65, stake: 110, status: 'loss', date: '2025-03-18', house: 'Bet365' },
+  ];
+  data.forEach((b, i) => bets.push({ ...b, id: (i + 1).toString(), league: '', market: 'Resultado Final (1X2)', notes: '', createdAt: new Date().toISOString() }));
+  saveLocal();
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('oe_session');
+  if (saved) { try { currentUser = JSON.parse(saved); enterApp(); } catch (e) { localStorage.removeItem('oe_session'); } }
+});
+</script>
+</body>
+</html>
