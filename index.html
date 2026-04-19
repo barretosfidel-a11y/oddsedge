@@ -105,6 +105,14 @@ tr:hover td{background:var(--bg3)}
 .btn-primary{background:var(--accent2);color:#fff}.btn-primary:hover{background:var(--accent);color:#000}
 .btn-secondary{background:var(--bg3);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{background:var(--bg4)}
 .btn-danger{background:var(--redBg);color:var(--red);border:1px solid rgba(220,38,38,.3)}
+.btn-edit{background:var(--blueBg);color:var(--blue);border:1px solid rgba(96,165,250,.3)}
+.btn-edit:hover{background:rgba(96,165,250,.2)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:24px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+.modal-close{background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;line-height:1;padding:4px 8px;border-radius:6px}
+.modal-close:hover{background:var(--bg3);color:var(--text)}
 .btn-sm{padding:5px 10px;font-size:11px}
 .empty{text-align:center;padding:40px 20px;color:var(--text3)}
 .streak-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin:2px}
@@ -328,14 +336,63 @@ tr:hover td{background:var(--bg3)}
   </div>
 </div>
 
+<!-- MODAL EDITAR APOSTA -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span>✏️ Editar Aposta</span>
+      <button class="modal-close" onclick="closeEdit()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="fgg"><label>Data</label><input type="date" id="e-date"></div>
+      <div class="fgg"><label>Esporte</label>
+        <select id="e-sport">
+          <option value="">Selecionar...</option>
+          <option>⚽ Futebol</option><option>🏀 Basquete</option><option>🎾 Tênis</option>
+          <option>🏈 Futebol Americano</option><option>🎱 Snooker</option><option>🏐 Vôlei</option>
+          <option>🥊 MMA/Boxe</option><option>🏎 Fórmula 1</option><option>⚾ Beisebol</option>
+          <option>🏒 Hóquei</option><option>🎮 eSports</option><option>Outros</option>
+        </select>
+      </div>
+      <div class="fgg"><label>Liga / Campeonato</label><input type="text" id="e-league" placeholder="Ex: Brasileirão, NBA..."></div>
+      <div class="fgg"><label>Partida</label><input type="text" id="e-match" placeholder="Ex: Flamengo x Palmeiras"></div>
+      <div class="fgg"><label>Mercado</label>
+        <select id="e-market">
+          <option>Resultado Final (1X2)</option><option>Dupla Chance</option><option>Ambas Marcam</option>
+          <option>Over/Under Gols</option><option>Handicap Asiático</option><option>Handicap Europeu</option>
+          <option>Placar Exato</option><option>Vencedor da Partida</option><option>Total de Pontos</option>
+          <option>Spread</option><option>Moneyline</option><option>Outros</option>
+        </select>
+      </div>
+      <div class="fgg"><label>Pick / Seleção</label><input type="text" id="e-pick" placeholder="Ex: Flamengo, Over 2.5..."></div>
+      <div class="fgg"><label>Odd (cotação)</label><input type="number" id="e-odd" step="0.01" min="1.01" placeholder="Ex: 1.95"></div>
+      <div class="fgg"><label>Stake (R$)</label><input type="number" id="e-stake" step="0.01" min="0.01" placeholder="Ex: 50.00"></div>
+      <div class="fgg"><label>Casa de Aposta</label><input type="text" id="e-house" placeholder="Ex: Bet365, Betano..."></div>
+      <div class="fgg"><label>Status</label>
+        <select id="e-status">
+          <option value="pending">⏳ Pendente</option>
+          <option value="win">✅ Green</option>
+          <option value="loss">❌ Red</option>
+          <option value="push">🔄 Devolvida</option>
+        </select>
+      </div>
+      <div class="fgg full"><label>Observações</label><textarea id="e-notes" rows="2" placeholder="Análise, contexto, tips..."></textarea></div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:10px">
+      <button class="btn btn-primary" onclick="saveEdit()" style="flex:1">✓ Salvar Alterações</button>
+      <button class="btn btn-secondary" onclick="closeEdit()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
 // ── CONFIG SUPABASE ────────────────────────────────────────────────────
 // Quando tiver seu Supabase pronto, substitua os valores abaixo:
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
-const USE_SUPABASE = SUPABASE_URL !== 'YOUR_SUPABASE_URL';
+const SUPABASE_URL = 'https://pgiyfuqxbfsbtsrkvgsn.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_mdPplLAcaTWyIXXCa8LA0A_RorFqrCa';
+const USE_SUPABASE = true;
 
 // ── STATE ──────────────────────────────────────────────────────────────
 let currentUser = null;
@@ -609,7 +666,7 @@ function mkTable(list, compact) {
   const rows = list.map(b => {
     const lv = b.status === 'win' ? b.stake * (b.odd - 1) : b.status === 'loss' ? -b.stake : b.status === 'push' ? 0 : null;
     const ls = lv === null ? '—' : `<span class="${lv >= 0 ? 'green' : 'red'}">${lv >= 0 ? '+' : ''}${fmt(lv)}</span>`;
-    const ex = compact ? '' : `<td style="color:var(--text2)">${b.house || '—'}</td><td style="color:var(--text2);max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.notes || '—'}</td><td><button class="btn btn-danger btn-sm" onclick="delBet('${b.id}')">✕</button></td>`;
+    const ex = compact ? '' : `<td style="color:var(--text2)">${b.house || '—'}</td><td style="color:var(--text2);max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.notes || '—'}</td><td style="display:flex;gap:5px"><button class="btn btn-edit btn-sm" onclick="openEdit('${b.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="delBet('${b.id}')">✕</button></td>`;
     return `<tr><td style="color:var(--text3);white-space:nowrap">${b.date}</td><td><span class="sb">${b.sport || '—'}</span></td><td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.match || '—'}</td><td style="color:var(--text2)">${b.pick || '—'}</td><td style="font-family:var(--mono)">${fmtN(b.odd)}</td><td style="font-family:var(--mono)">${fmt(b.stake)}</td><td>${ls}</td><td>${sm[b.status] || ''}</td>${ex}</tr>`;
   }).join('');
   const exH = compact ? '' : '<th>Casa</th><th>Notas</th><th></th>';
@@ -633,6 +690,48 @@ function delBet(id) {
   if (!confirm('Remover esta aposta?')) return;
   bets = bets.filter(b => b.id !== id);
   saveLocal(); renderHistory(); toast('Aposta removida', 'err');
+}
+
+let editingId = null;
+
+function openEdit(id) {
+  const b = bets.find(b => b.id === id);
+  if (!b) return;
+  editingId = id;
+  $('e-date').value = b.date;
+  $('e-sport').value = b.sport || '';
+  $('e-league').value = b.league || '';
+  $('e-match').value = b.match || '';
+  $('e-market').value = b.market || 'Resultado Final (1X2)';
+  $('e-pick').value = b.pick || '';
+  $('e-odd').value = b.odd;
+  $('e-stake').value = b.stake;
+  $('e-house').value = b.house || '';
+  $('e-status').value = b.status;
+  $('e-notes').value = b.notes || '';
+  $('edit-modal').classList.add('open');
+}
+
+function closeEdit() {
+  editingId = null;
+  $('edit-modal').classList.remove('open');
+}
+
+function saveEdit() {
+  if (!editingId) return;
+  const d = $('e-date').value, sp = $('e-sport').value, lg = $('e-league').value,
+    mt = $('e-match').value, mk = $('e-market').value, pk = $('e-pick').value,
+    odd = parseFloat($('e-odd').value), stake = parseFloat($('e-stake').value),
+    hs = $('e-house').value, st = $('e-status').value, nt = $('e-notes').value;
+  if (!d || !sp || !mt || !odd || !stake) { toast('Preencha os campos obrigatórios', 'err'); return; }
+  if (odd < 1.01) { toast('Odd mínima: 1.01', 'err'); return; }
+  if (stake <= 0) { toast('Stake deve ser positivo', 'err'); return; }
+  const idx = bets.findIndex(b => b.id === editingId);
+  if (idx === -1) return;
+  bets[idx] = { ...bets[idx], date: d, sport: sp, league: lg, match: mt, market: mk, pick: pk, odd, stake, house: hs, status: st, notes: nt };
+  saveLocal(); closeEdit(); renderHistory();
+  if ($('tab-dashboard').classList.contains('active')) renderDashboard();
+  toast('✅ Aposta atualizada!');
 }
 
 // ── REGISTER ───────────────────────────────────────────────────────────
